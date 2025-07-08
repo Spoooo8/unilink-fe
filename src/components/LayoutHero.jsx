@@ -2,7 +2,7 @@ import book from '../../public/image/book.png';
 import Button from './Button';
 import { useNavigate } from 'react-router-dom';
 
-function QuizCard() {
+function LayoutHero() {
   const navigate = useNavigate();
   return (
     <>
@@ -17,7 +17,7 @@ function QuizCard() {
             px="px-5"
             py="py-2"
             className="bg-[#6c2b3d] text-white hover:bg-[#581d2f]"
-             onClick={() => navigate('/quiz')}
+             onClick={() => navigate('/assessment')}
           >
             Start
           </Button>
@@ -63,4 +63,4 @@ function QuizCard() {
   );
 }
 
-export default QuizCard;
+export default LayoutHero;

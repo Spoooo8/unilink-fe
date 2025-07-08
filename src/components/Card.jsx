@@ -1,28 +1,44 @@
+import React, { useEffect, useState } from 'react';
+import axiosInstance from '../utils/axiosInstance';
+import { useNavigate } from 'react-router-dom';
+
 function Card() {
-   const cardData = [
-    {
-      title: "Proven Track Record of Successful Project Management and Execution",
-      description: "Expert at delivering projects on time and within budget.",
-    },
-    {
-      title: "Expertise in Digital Marketing Strategies That Drive Results",
-      description:
-        "My campaigns have consistently increased engagement and conversion for clients.",
-    },
-    {
-      title: "Strong Communication Skills That Foster Team Collaboration and Client Relations",
-      description:
-        "Effective in facilitating teamwork, resolving conflicts, and aligning team goals.",
-    },
-  ];
+  const [cardData, setCardData] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCardData = async () => {
+      try {
+        const response = await axiosInstance.get('/projects/layout/cards');
+        if (Array.isArray(response.data)) {
+          const updatedData = response.data.map((card) => ({
+            ...card,
+            skillRequired: card.skillRequired || 'C++, Java',
+          }));
+          setCardData(updatedData);
+        } else {
+          console.error('API did not return an array:', response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching card data:', error);
+      }
+    };
+
+    fetchCardData();
+  }, []);
+
+  const handleCardClick = (id) => {
+    navigate(`/project/${id}/desc`);
+  };
 
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-6 pb-10">
-        {cardData.map((card, index) => (
+        {cardData.map((card) => (
           <div
-            key={index}
-            className="border border-gray-300 rounded shadow-sm text-center p-4 transform transition duration-300 ease-in-out hover:scale-105 hover:z-10"
+            key={card.id}
+            className="border border-gray-300 rounded shadow-sm text-center p-4 transform transition duration-300 ease-in-out hover:scale-105 hover:z-10 cursor-pointer"
+            onClick={() => handleCardClick(card.id)}
           >
             <div className="bg-gray-300 h-40 flex items-center justify-center rounded">
               <svg
@@ -43,13 +59,12 @@ function Card() {
               className="mt-4 font-semibold text-sm"
               dangerouslySetInnerHTML={{ __html: card.title }}
             ></h3>
-            <p className="text-xs text-gray-600 mt-2">{card.description}</p>
-            <a
-              href={card.linkHref}
-              className="text-sm text-[#6c2b3d] font-medium mt-2 inline-block hover:underline"
-            >
-              {card.linkText}
-            </a>
+            <p className="text-xs text-gray-600 mt-2">
+              Skills: {card.skillRequired}
+            </p>
+            <p className="text-xs text-gray-600 mt-1">
+              Application Deadline: {card.applicationDeadline}
+            </p>
           </div>
         ))}
       </div>

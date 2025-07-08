@@ -4,10 +4,8 @@ function Footer() {
   return (
     <>
     
-<footer class="bg-black text-white py-10 px-6 md:px-16">
-  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-10 text-sm">
-
-    
+<footer class="bg-black text-white py-10 px-6 md:px-1">
+  <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-5 gap-10 text-sm">    
     <div>
       <img src={logo} alt="Logo" className="h-10  w-auto" />
     </div>

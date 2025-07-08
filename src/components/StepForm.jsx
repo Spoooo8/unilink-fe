@@ -26,8 +26,8 @@ const StepForm = ({
     const currentValue = values[fieldName] || [];
     if (!setter) return;
 
-    if (currentValue.includes(val)) {
-      setter(currentValue.filter((v) => v !== val));
+    if (currentValue.some((v) => v.value === val.value)) {
+      setter(currentValue.filter((v) => v.value !== val.value));
     } else {
       setter([...currentValue, val]);
     }
@@ -40,13 +40,30 @@ const StepForm = ({
     }));
   };
 
-  const handleNext = () => setActiveStep((prev) => prev + 1);
+  const isCurrentStepValid = () => {
+    return fieldsPerStep[activeStep].every((field) => {
+      const value = values[field.name];
+      if (field.type === 'multiselect') {
+        return Array.isArray(value) && value.length > 0;
+      }
+      return value !== '' && value !== null && value !== undefined;
+    });
+  };
+
+  const handleNext = () => {
+    if (isCurrentStepValid()) {
+      setActiveStep((prev) => prev + 1);
+    } else {
+      alert('Please fill in all required fields before proceeding.');
+    }
+  };
+
   const handleBack = () => setActiveStep((prev) => prev - 1);
 
   return (
-    <div className="w-4/5 min-h-[85vh] mx-auto bg-white p-12 rounded-lg shadow-lg">
+    <div className="min-h-[95vh] flex flex-col items-center justify-center bg-white p-12 rounded-lg shadow-lg">
       {/* Stepper */}
-      <div className="flex justify-between mb-10">
+      <div className="flex justify-between mb-10 w-[900px] max-w-lg">
         {steps.map((label, idx) => (
           <div key={label} className="flex-1 text-center relative">
             <div
@@ -63,49 +80,19 @@ const StepForm = ({
         ))}
       </div>
 
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmit} className="flex flex-col items-center w-full">
         {fieldsPerStep[activeStep].map((field) => {
-          const {
-            name,
-            label,
-            type,
-            options = [],
-            multiline,
-            rows,
-            placeholder,
-          } = field;
+          const { name, label, options = [], placeholder } = field;
           const value = values[name] || [];
           const setter = getSetter(name);
           if (!setter) return null;
 
-          if (type === 'select') {
-            return (
-              <div key={name} className="mb-5">
-                <label className="block text-gray-700 font-medium mb-2">
-                  {label}
-                </label>
-                <select
-                  name={name}
-                  value={value}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  <option value="">Select an option</option>
-                  {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            );
-          }
-
-          if (type === 'multiselect') {
+          // Multiselect Dropdown
+          if (field.type === 'multiselect') {
             const isOpen = dropdownStates[name] || false;
 
             return (
-              <div key={name} className="mb-5 relative">
+              <div key={name} className="mb-5 relative w-full max-w-lg">
                 <label className="block text-gray-700 font-medium mb-2">
                   {label}
                 </label>
@@ -113,7 +100,7 @@ const StepForm = ({
                   onClick={() => toggleDropdown(name)}
                   className="w-full border border-gray-300 rounded px-3 py-2 cursor-pointer bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
-                  {value.length > 0 ? value.join(', ') : 'Select options'}
+                  {value.length > 0 ? value.map((v) => v.label).join(', ') : 'Select options'}
                 </div>
 
                 {isOpen && (
@@ -121,14 +108,12 @@ const StepForm = ({
                     {options.map((opt) => (
                       <div
                         key={opt.value}
-                        className={`px-4 py-2 hover:bg-indigo-100 cursor-pointer ${
-                          value.includes(opt.value) ? 'bg-indigo-50' : ''
-                        }`}
-                        onClick={() => toggleMultiOption(name, opt.value)}
+                        className={`px-4 py-2 hover:bg-indigo-100 cursor-pointer ${value.some((v) => v.value === opt.value) ? 'bg-indigo-50' : ''}`}
+                        onClick={() => toggleMultiOption(name, opt)}
                       >
                         <input
                           type="checkbox"
-                          checked={value.includes(opt.value)}
+                          checked={value.some((v) => v.value === opt.value)}
                           readOnly
                           className="mr-2"
                         />
@@ -141,26 +126,71 @@ const StepForm = ({
             );
           }
 
+          // Textarea for Description
+          if (name === 'description') {
+            return (
+              <div key={name} className="mb-5 w-full max-w-lg">
+                <label className="block text-gray-700 font-medium mb-2">
+                  {label}
+                </label>
+                <textarea
+                  name={name}
+                  value={value}
+                  placeholder={placeholder}
+                  onChange={handleChange}
+                  required
+                  rows={4}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            );
+          }
+
+          // Select Dropdown
+          if (field.type === 'select') {
+            return (
+              <div key={name} className="mb-5 w-full max-w-lg">
+                <label className="block text-gray-700 font-medium mb-2">
+                  {label}
+                </label>
+                <select
+                  name={name}
+                  value={value}
+                  onChange={handleChange}
+                  required
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="" disabled>Select {label}</option>
+                  {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          }
+
+          // All other fields as Input Text
           return (
-            <div key={name} className="mb-5">
+            <div key={name} className="mb-5 w-full max-w-lg">
               <label className="block text-gray-700 font-medium mb-2">
                 {label}
               </label>
-              <textarea
-                rows={rows || 3}
+              <input
+                type={field.type}
                 name={name}
                 value={value}
                 placeholder={placeholder}
                 onChange={handleChange}
-                className={`w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-                  multiline ? '' : 'resize-none'
-                }`}
+                required
+                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
           );
         })}
 
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex justify-end gap-3 mt-6 w-full max-w-lg">
           {activeStep > 0 && (
             <button
               type="button"
@@ -174,14 +204,16 @@ const StepForm = ({
             <button
               type="button"
               onClick={handleNext}
-              className="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium"
+              disabled={!isCurrentStepValid()}
+              className={`px-6 py-2 rounded text-sm font-medium ${isCurrentStepValid() ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
             >
               Next Step
             </button>
           ) : (
             <button
               type="submit"
-              className="px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm font-medium"
+              disabled={!isCurrentStepValid()}
+              className={`px-6 py-2 rounded text-sm font-medium ${isCurrentStepValid() ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
             >
               Submit
             </button>

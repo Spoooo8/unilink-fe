@@ -1,7 +1,5 @@
 import Nav from '../components/Nav';
 import SideBar from '../components/SideBar';
-import QuizCard from '../components/QuizCard';
-import Card from '../components/Card';
 import { Outlet } from 'react-router-dom';
 
 function MainFrame() {

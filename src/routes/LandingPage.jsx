@@ -1,4 +1,4 @@
-import logo from '../../public/image/logo.png'
+import { useRef } from 'react';
 import CardSection from '../components/CardSection';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
@@ -6,16 +6,21 @@ import Nav from '../components/Nav';
 import PinkSection from '../components/PinkSection';
 
 function LandingPage() {
+  const pinkSectionRef = useRef(null);
 
-return (
+  const scrollToPinkSection = () => {
+    pinkSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
     <>
-    <Nav/>
-    <HeroSection/>
-    <CardSection/>
-    <PinkSection/>
-    <Footer/>
+      <Nav />
+      <HeroSection scrollToPinkSection={scrollToPinkSection} />
+      <CardSection />
+      <PinkSection ref={pinkSectionRef} />
+      <Footer />
     </>
-);
-};
+  );
+}
 
-export default LandingPage  ;
+export default LandingPage;

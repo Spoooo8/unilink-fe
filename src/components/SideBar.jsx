@@ -11,7 +11,7 @@ function SideBar() {
   };
 
   const sidebarItems = [
-    { icon: '📄', text: 'Dashboard', path: '/layout' },
+    { icon: '📄', text: 'Dashboard', path: '/' },
     { icon: '🎓', text: 'Assessment', path: '/assessment' },
     { icon: '🗂️', text: 'My Projects', path: '/projects' },
     { icon: '📝', text: 'Host Project', path: '/host' },

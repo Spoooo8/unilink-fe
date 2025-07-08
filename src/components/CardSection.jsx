@@ -4,15 +4,14 @@ function CardSection() {
   return (
     <>
       
-  <div class="bg-white">
+  <div className="bg-white">
 
-    <div class="text-center py-10">
-      <h2 class="text-2xl md:text-3xl font-semibold">
-        Showcase Your Top Skills for a <span class="text-[#6c2b3d]">Competitive</span><br/>
+    <div className="text-center py-10">
+      <h2 className="text-2xl md:text-3xl font-semibold">
+        Showcase Your Top Skills for a <span className="text-[#6c2b3d]">Competitive</span><br/>
         Job Market
       </h2>
     </div>   
-    <Card/>
   </div>
     </>
   );

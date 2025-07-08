@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import StepForm from '../components/StepForm'; 
+import StepForm from '../components/StepForm';
+import axiosInstance from '../utils/axiosInstance';
 
 const HostProject = () => {
   const [skillsList, setSkillsList] = useState([]);
 
   const [title, setTitle] = useState('');
+  const [repoLink, setRepoLink] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -13,23 +15,24 @@ const HostProject = () => {
   const [complexityLevel, setComplexityLevel] = useState('');
   const [visibility, setVisibility] = useState('');
   const [teamSize, setTeamSize] = useState('');
-  const [projectType, setProjectType] = useState('');
   const [skillRequired, setSkillRequired] = useState([]);
-  const [domain, setDomain] = useState([]);
   const [openSuccess, setOpenSuccess] = useState(false);
 
-  const domains = ['Web Development', 'Data Science', 'AI', 'Mobile Development'];
-  const complexities = ['Beginner', 'Intermediate', 'Advanced'];
+  const complexities = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
   const visibilityOptions = ['Public', 'Private'];
 
   useEffect(() => {
     const fetchSkills = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/v1/skill/all');
-        const data = await res.json();
-        setSkillsList(data);
+        const res = await axiosInstance.get('http://localhost:8080/unilink/users/skill/all');
+        if (Array.isArray(res.data)) {
+          setSkillsList(res.data);
+        } else {
+          setSkillsList([]);
+          console.error('API did not return an array:', res.data);
+        }
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching skills:', err);
       }
     };
     fetchSkills();
@@ -39,27 +42,22 @@ const HostProject = () => {
 
   const fieldsPerStep = [
     [
-      { name: 'title', label: 'Project Title', type: 'text', placeholder: 'Title' },
-      { name: 'description', label: 'Description', type: 'text', multiline: true, rows: 4 },
-      { name: 'imageUrl', label: 'Image URL', type: 'text', placeholder: 'Image link' },
-      { name: 'projectType', label: 'Project Type', type: 'text', placeholder: 'e.g. Competition' },
+      { name: 'title', label: 'Project Title', type: 'text', placeholder: 'Title', required: true },
+      { name: 'repoLink', label: 'Repository Link', type: 'text', placeholder: 'e.g. GitHub Repo', required: true },
+      { name: 'description', label: 'Description', type: 'text', multiline: true, rows: 4, required: true },
+      { name: 'imageUrl', label: 'Image URL', type: 'text', placeholder: 'Image link', required: true },
       {
         name: 'skillRequired',
         label: 'Skills Required',
         type: 'multiselect',
-        options: skillsList.map((s) => ({ value: s.id, label: s.name })),
-      },
-      {
-        name: 'domain',
-        label: 'Domain',
-        type: 'multiselect',
-        options: domains.map((d) => ({ value: d, label: d })),
+        options: Array.isArray(skillsList) ? skillsList.map((s) => ({ value: s.id, label: s.name })) : [],
+        required: true,
       },
     ],
     [
-      { name: 'startDate', label: 'Start Date', type: 'date' },
-      { name: 'endDate', label: 'End Date', type: 'date' },
-      { name: 'applicationDeadline', label: 'Application Deadline', type: 'date' },
+      { name: 'startDate', label: 'Start Date', type: 'date', required: true },
+      { name: 'endDate', label: 'End Date', type: 'date', required: true },
+      { name: 'applicationDeadline', label: 'Application Deadline', type: 'date', required: true },
     ],
     [
       {
@@ -67,66 +65,79 @@ const HostProject = () => {
         label: 'Complexity Level',
         type: 'select',
         options: complexities.map((c) => ({ value: c, label: c })),
+        required: true,
       },
       {
         name: 'visibility',
         label: 'Visibility',
         type: 'select',
         options: visibilityOptions.map((v) => ({ value: v, label: v })),
+        required: true,
       },
       {
         name: 'teamSize',
         label: 'Team Size',
         type: 'number',
         placeholder: 'e.g. 3',
+        required: true,
       },
     ],
   ];
 
   const values = {
-    title, description, startDate, endDate, applicationDeadline,
-    imageUrl, complexityLevel, visibility, teamSize, projectType,
-    skillRequired, domain,
+    title,
+    repoLink,
+    description,
+    startDate,
+    endDate,
+    applicationDeadline,
+    imageUrl,
+    complexityLevel,
+    visibility,
+    teamSize,
+    skillRequired,
   };
 
   const setters = {
-    setTitle, setDescription, setStartDate, setEndDate, setApplicationDeadline,
-    setImageUrl, setComplexityLevel, setVisibility, setTeamSize, setProjectType,
-    setSkillRequired, setDomain,
+    setTitle,
+    setRepoLink,
+    setDescription,
+    setStartDate,
+    setEndDate,
+    setApplicationDeadline,
+    setImageUrl,
+    setComplexityLevel,
+    setVisibility,
+    setTeamSize,
+    setSkillRequired,
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const payload = {
-      hostId: 1,
       title,
+      repoLink,
       description,
+      imageUrl,
+      skillIds: skillRequired.map((item) => item.value),
       startDate,
       endDate,
-      imageUrl,
-      complexityLevel: complexityLevel || 'Medium',
-      visibility: visibility || 'Public',
       applicationDeadline,
+      complexityLevel: complexityLevel || 'INTERMEDIATE',
+      projectVisibility: visibility || 'Public',
       teamSize: Number(teamSize),
-      progress: 0.0,
-      rating: 0.0,
-      projectType,
-      statusId: 1,
-      skillIds: skillRequired.map((id) => Number(id)),
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/v1/projects/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await axiosInstance.post('http://localhost:8080/unilink/projects/add', payload);
 
-      if (!response.ok) throw new Error('Failed to submit project');
+      if (response.status !== 200 && response.status !== 201)
+        throw new Error('Failed to submit project');
 
       setOpenSuccess(true);
     } catch (err) {
-      console.error(err);
+      console.error('Error submitting project:', err);
     }
   };
 
@@ -140,6 +151,7 @@ const HostProject = () => {
         onSubmit={handleSubmit}
         successOpen={openSuccess}
         setSuccessOpen={setOpenSuccess}
+        isValidationRequired={true}
       />
     </div>
   );
